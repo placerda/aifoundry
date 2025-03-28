@@ -29,7 +29,6 @@ index_client = SearchIndexClient(
     endpoint=search_connection.endpoint_url, credential=AzureKeyCredential(key=search_connection.key)
 )
 
-
 import pandas as pd
 from azure.search.documents.indexes.models import (
     SemanticSearch,
@@ -65,6 +64,8 @@ def create_index_definition(index_name: str, model: str) -> SearchIndex:
         SimpleField(name="filepath", type=SearchFieldDataType.String),
         SearchableField(name="title", type=SearchFieldDataType.String),
         SimpleField(name="url", type=SearchFieldDataType.String),
+        SearchableField(name="captions", type=SearchFieldDataType.String),    
+        SearchableField(name="imagepath", type=SearchFieldDataType.String),    
         SearchField(
             name="contentVector",
             type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
@@ -129,6 +130,56 @@ def create_index_definition(index_name: str, model: str) -> SearchIndex:
         vector_search=vector_search,
     )
 
+
+import base64
+from pathlib import Path
+import os
+from azure.ai.inference.prompts import PromptTemplate
+
+def encode_image_to_base64(filepath: str) -> str:
+    with open(filepath, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+def create_captions(filepath: str) -> str:
+
+    from config import ASSET_PATH
+
+    # Encode the image
+    image_base64 = encode_image_to_base64(filepath)
+
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an AI assistant that helps analyze images."
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Generate a detailed description of the following figure, including its key elements and context, to optimize it for retrieval purposes. Use no more than 200 words."},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{image_base64}"
+                    }
+                }
+            ]
+        }
+    ]
+
+    openai_client = project.inference.get_azure_openai_client(api_version="2024-06-01")
+
+    response = openai_client.chat.completions.create(
+        model=os.environ["CHAT_MODEL"],
+        messages=messages,
+        max_tokens=512
+    )
+
+    captions = response.choices[0].message.content
+    logger.debug(f"🧠 Captions: {captions}")
+
+    return captions
+
 # define a function for indexing a csv file, that adds each row as a document
 # and generates vector embeddings for the specified content_column
 def create_docs_from_csv(path: str, content_column: str, model: str) -> list[dict[str, any]]:
@@ -139,6 +190,8 @@ def create_docs_from_csv(path: str, content_column: str, model: str) -> list[dic
         id = str(product["id"])
         title = product["name"]
         url = f"/products/{title.lower().replace(' ', '-')}"
+        captions = "" if pd.isna(product["imagepath"]) else create_captions(product["imagepath"])
+        imagepath = "" if pd.isna(product["imagepath"]) else product["imagepath"]
         emb = embeddings.embed(input=content, model=model)
         rec = {
             "id": id,
@@ -146,12 +199,13 @@ def create_docs_from_csv(path: str, content_column: str, model: str) -> list[dic
             "filepath": f"{title.lower().replace(' ', '-')}",
             "title": title,
             "url": url,
+            "captions": captions,
+            "imagepath": imagepath,                        
             "contentVector": emb.data[0].embedding,
         }
         items.append(rec)
 
     return items
-
 
 def create_index_from_csv(index_name, csv_file):
     # If a search index already exists, delete it:
