@@ -7,3 +7,6 @@ python-dotenv
 opentelemetry-api
 azure-monitor-opentelemetry
 azure-ai-evaluation[remote]
+fastapi
+uvicorn
+chainlit==2.4.0
