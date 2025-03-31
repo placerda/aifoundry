@@ -44,7 +44,7 @@ def evaluate_chat_with_products(query):
         "context": response["context"]["grounding_data"]
     }
 
-# Evaluate must be called inside of __main__, not on import
+# Evaluate must be called inside of __main__, not on import 
 if __name__ == "__main__":
     from config import ASSET_PATH
     from pprint import pprint

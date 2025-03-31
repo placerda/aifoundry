@@ -64,4 +64,4 @@ if __name__ == "__main__":
         enable_telemetry(True)
 
     # run chat with products
-    response = chat_with_products(messages=[{"role": "user", "content": args.query}])
+    response = chat_with_products(messages=[{"role": "user", "content": args.query}]) 
