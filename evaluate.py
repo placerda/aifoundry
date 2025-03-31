@@ -41,15 +41,18 @@ if __name__ == "__main__":
     from pathlib import Path
     import multiprocessing
     import contextlib
+    from datetime import datetime
 
     with contextlib.suppress(RuntimeError):
         multiprocessing.set_start_method("spawn", force=True)
 
     # run evaluation with a dataset and target function, log to the project
+    evaluation_name = f"evaluate_chat_with_products_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
     result = evaluate(
         data=Path(ASSET_PATH) / "chat_eval_data.jsonl",
         target=evaluate_chat_with_products,
-        evaluation_name="evaluate_chat_with_products",
+        evaluation_name=evaluation_name,
         evaluators={
             "groundedness": groundedness,
         },
