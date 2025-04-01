@@ -6,4 +6,5 @@ pandas
 python-dotenv
 opentelemetry-api
 azure-monitor-opentelemetry
-azure-ai-evaluation[remote]
+# azure-ai-evaluation[remote]
+git+https://github.com/Azure/azure-sdk-for-python.git@main#egg=azure-ai-evaluation&subdirectory=sdk/evaluation/azure-ai-evaluation

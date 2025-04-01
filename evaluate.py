@@ -5,6 +5,16 @@ from azure.ai.projects.models import ConnectionType
 from azure.ai.evaluation import evaluate, GroundednessEvaluator
 from azure.identity import DefaultAzureCredential
 
+# # Debugging requests
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+# import requests
+# original_request = requests.Session.request
+# def patched_request(self, method, url, *args, **kwargs):
+#     print("Request URL:", url)
+#     return original_request(self, method, url, *args, **kwargs)
+# requests.Session.request = patched_request
+
 from chat_with_products import chat_with_products
 
 # load environment variables from the .env file at the root of this repo

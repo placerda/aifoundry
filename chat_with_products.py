@@ -11,6 +11,17 @@ from get_product_documents import get_product_documents
 logger = get_logger(__name__)
 tracer = trace.get_tracer(__name__)
 
+
+# # Debugging requests
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+# import requests
+# original_request = requests.Session.request
+# def patched_request(self, method, url, *args, **kwargs):
+#     print("Request URL:", url)
+#     return original_request(self, method, url, *args, **kwargs)
+# requests.Session.request = patched_request
+
 # create a project client using environment variables loaded from the .env file
 project = AIProjectClient.from_connection_string(
     conn_str=os.environ["AIPROJECT_CONNECTION_STRING"], credential=DefaultAzureCredential()
@@ -42,6 +53,7 @@ def chat_with_products(messages: list, context: dict = None) -> dict:
 
     # Return a chat protocol compliant response
     return {"message": response.choices[0].message, "context": context}
+
 
 if __name__ == "__main__":
     import argparse

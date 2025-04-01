@@ -34,6 +34,7 @@ search_client = SearchClient(
     credential=AzureKeyCredential(key=search_connection.key),
 )
 
+
 from azure.ai.inference.prompts import PromptTemplate
 from azure.search.documents.models import VectorizedQuery
 
