@@ -27,19 +27,13 @@ def encode_image_to_base64(filepath: str) -> str:
         return base64.b64encode(image_file.read()).decode('utf-8')
     
 @tracer.start_as_current_span(name="chat_with_products")
-def chat_with_products(messages_with_images: list, context: dict = None) -> dict:
+def chat_with_products(input_messages: list, context: dict = None) -> dict:
     if context is None:
         context = {}
 
-    documents = get_product_documents(messages_with_images, context)
+    documents = get_product_documents(input_messages, context)
 
-    # do a grounded chat call using the search results
-    grounded_chat_prompt = PromptTemplate.from_prompty(Path(ASSET_PATH) / "grounded_chat.prompty")
-    messages = grounded_chat_prompt.create_messages(documents=documents, context=context)
-
-    # create message content
-    message_content = []
-
+    source_images = [{"type": "text", "text": "Here are the source images"}]
     for document in documents:
         filepath = document['imagepath']
         if filepath:
@@ -50,16 +44,18 @@ def chat_with_products(messages_with_images: list, context: dict = None) -> dict
                     "url": f"data:image/jpeg;base64,{image_base64}"
                 }
             }
-            message_content.append(image_content)
-
-    messages_with_images =  {
+            source_images.append(image_content)
+    messages_with_images = {
             "role": "user",
-            "content": message_content
+            "content": source_images
         }
     
-
+    # do a grounded chat call using the search results
+    grounded_chat_prompt = PromptTemplate.from_prompty(Path(ASSET_PATH) / "grounded_chat.prompty")
+    messages = grounded_chat_prompt.create_messages(documents=documents, context=context)
     messages.append(messages_with_images)
-
+    messages = messages + input_messages
+    
     openai_client = project.inference.get_azure_openai_client(api_version="2024-06-01")
 
     response = openai_client.chat.completions.create(
@@ -68,20 +64,11 @@ def chat_with_products(messages_with_images: list, context: dict = None) -> dict
         max_tokens=512
     )
 
-    # captions = response.choices[0].message.content
-    # logger.debug(f"🧠 Captions: {captions}")
-
-
-    # response = chat.complete(
-    #     model=os.environ["CHAT_MODEL"],
-    #     messages=system_message + messages,
-    #     **grounded_chat_prompt.parameters,
-    # )
-    logger.info(f"💬 Response: {response.choices[0].message}")
+    logger.info(f"💬 Response: {response.choices[0].message.content}")
 
 
     # Return a chat protocol compliant response
-    return {"message": response.choices[0].message, "context": context}
+    return {"message": response.choices[0].message.content, "context": context}
 
 if __name__ == "__main__":
     import argparse
@@ -104,4 +91,4 @@ if __name__ == "__main__":
         enable_telemetry(True)
 
     # run chat with products
-    response = chat_with_products(messages_with_images=[{"role": "user", "content": args.query}])
+    response = chat_with_products(input_messages=[{"role": "user", "content": args.query}])

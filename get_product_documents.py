@@ -66,7 +66,7 @@ def get_product_documents(messages: list, context: dict = None) -> dict:
     vector_query = VectorizedQuery(vector=search_vector, k_nearest_neighbors=top, fields="contentVector")
 
     search_results = search_client.search(
-        search_text=search_query, vector_queries=[vector_query], select=["id", "content", "filepath", "title", "url"]
+        search_text=search_query, vector_queries=[vector_query], select=["id", "content", "filepath", "title", "url", "imagepath"]
     )
 
     documents = [
@@ -76,6 +76,7 @@ def get_product_documents(messages: list, context: dict = None) -> dict:
             "filepath": result["filepath"],
             "title": result["title"],
             "url": result["url"],
+            "imagepath": result["imagepath"]
         }
         for result in search_results
     ]
@@ -98,7 +99,6 @@ def get_product_documents(messages: list, context: dict = None) -> dict:
 
     logger.debug(f"📄 {len(documents)} documents retrieved: {documents}")
     return documents
-
 
 if __name__ == "__main__":
     import logging
