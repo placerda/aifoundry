@@ -33,6 +33,7 @@ def chat_with_products(input_messages: list, context: dict = None) -> dict:
 
     documents = get_product_documents(input_messages, context)
 
+    # get source images from retrieved documents
     source_images = [{"type": "text", "text": "Here are the source images"}]
     for document in documents:
         filepath = document['imagepath']
