@@ -8,5 +8,8 @@ opentelemetry-api
 azure-monitor-opentelemetry
 azure-ai-evaluation[remote]
 fastapi
+httpx
+starlette 
+itsdangerous
 uvicorn
 chainlit==2.4.0
